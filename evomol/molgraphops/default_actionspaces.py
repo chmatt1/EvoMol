@@ -1,16 +1,18 @@
 from .actionspace import ActionSpace, AddAtomActionSpace, SubstituteAtomActionSpace, \
     RemoveAtomActionSpace, ChangeBondActionSpace, CutAtomV2ActionSpace, InsertCarbonAtomV2ActionSpace, \
-    MoveFunctionalGroupActionSpace, RemoveGroupActionSpace
+    MoveFunctionalGroupActionSpace, RemoveGroupActionSpace, AddFragmentActionSpace
 
 
-def generic_action_space(atom_symbols_list, max_heavy_atoms, append_atom=True, remove_atom=True, change_bond=True,
-                         change_bond_prevent_breaking_creating_bonds=False, substitution=True, cut_insert=True,
-                         move_group=True, remove_group=False, remove_group_only_remove_smallest_group=True):
+def generic_action_space(atom_symbols_list, max_heavy_atoms, append_atom=True, append_fragment=False, remove_atom=True,
+                         change_bond=True, change_bond_prevent_breaking_creating_bonds=False, substitution=True,
+                         cut_insert=True, move_group=True, remove_group=False, remove_group_only_remove_smallest_group=True,
+                         sulfur_valence=6):
     """
     Building the action space for given atom list and max molecular size
     :param atom_symbols_list: list of atoms symbols
     :param max_heavy_atoms: max number of heavy atoms in the solutions
     :param append_atom: whether to allow the addition of atoms to the molecular graph
+    :param append_fragment: whether to allow the addition of fragments to the molecular graph, if allowed this stores the path to the fragments.smi file
     :param remove_atom: whether to allow the removal of atoms from the molecular graph
     :param change_bond: whether to allow the modification of a bond type
     :param change_bond_prevent_breaking_creating_bonds: whether to prevent the removal of bonds by change_bond action
@@ -20,6 +22,7 @@ def generic_action_space(atom_symbols_list, max_heavy_atoms, append_atom=True, r
     :param remove_group: whether remove group action is active
     :param remove_group_only_remove_smallest_group: in case remove group action is enabled, whether to be able to remove
     both parts of a bridge bond, or only the smallest part in number of atoms
+    :param sulfur_valence: valence of sulfur atoms, used only for append_fragment
     :return: tuple (action_spaces, action_spaces_parameters)
     """
 
@@ -44,6 +47,10 @@ def generic_action_space(atom_symbols_list, max_heavy_atoms, append_atom=True, r
 
     if append_atom:
         action_spaces.append(AddAtomActionSpace(keep_connected=True, check_validity=False))
+
+    if append_fragment:
+        action_spaces.append(AddFragmentActionSpace(check_validity=False, fragments_file=append_fragment,
+                                                    sulfur_valence=sulfur_valence))
 
     if remove_atom:
         action_spaces.append(RemoveAtomActionSpace(keep_connected=True, check_validity=False))

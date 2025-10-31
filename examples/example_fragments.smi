@@ -1,0 +1,31 @@
+#LIST OF SMALL FRAGMENTS
+
+#RINGS
+
+##5-membered
+###O
+c1ccoc1 	!furane
+###N
+c1cc[nH]c1	!pyrrole
+c1cn[nH]c1	!pyrazole
+c1c[nH]cn1	!imidazole
+c1nnn[n-]1 	!tetrazole 1
+c1nn[n-]n1 	!tetrazole 2
+###NO
+c1cocn1		!oxazole
+c1cnoc1		!isoxazole
+
+##6-membered
+c1ccccc1
+###N
+C1CNCCN1	!piperazine
+c1ccncc1	!pyridine
+c1cnccn1	!pyrazine
+c1cncnc1	!pyrimidine
+###NO
+C1COCCN1	!morpholine
+
+
+#OTHER
+NC=O
+O=S=O

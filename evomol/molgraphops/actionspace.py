@@ -3,6 +3,9 @@ from abc import ABC, abstractmethod
 import numpy as np
 import networkx as nx
 from networkx import connected_components, node_connected_component
+from rdkit.Chem.rdmolfiles import MolFromSmiles
+
+from .molgraph import MolGraph
 
 
 class ActionSpace(ABC):
@@ -964,3 +967,128 @@ class SubstituteAtomActionSpace(ActionSpace):
         at_id = action_id // len(parameters.accepted_atoms)
         return "Substitute atom of id " + str(at_id) + " and type " + qu_mol_graph.get_atom_type(at_id) + " by " + \
                parameters.accepted_atoms[action_id % len(parameters.accepted_atoms)]
+    
+class AddFragmentActionSpace(ActionSpace):
+    """
+    Defining the action space for fragment addition into the molecular graph.
+    A fragment can be inserted into the molecular graph if the maximum number of heavy atoms has not
+    been reached.
+    The fragment is always connected to the molecule.
+    """
+
+    def __init__(self, check_validity=True, fragments_file=None, sulfur_valence=6):
+        """
+        Recording user options. Always keep fragment connected.
+        """
+        super().__init__(check_validity=check_validity)
+
+        self.sulfur_valence = sulfur_valence
+        self.fragments = self.read_fragments(fragments_file)
+        self.keep_connected = True
+        self.allow_bonding = True
+
+    def read_fragments(self, file):
+        with open(file, "r") as fhandle:
+            fragments = fhandle.read().split("\n")
+        
+        frag_vec = []
+        for i in fragments:
+            if not i or i[0] in ["!", "#"]:
+                continue
+            i = i.split()[0]
+            i = MolGraph(MolFromSmiles(i), sanitize_mol=True, mutability=True,
+                         sulfur_valence=self.sulfur_valence)
+            frag_vec.append(i)
+        return frag_vec
+
+    def action_space_type_id(self):
+        return "AddF"
+
+    def get_action_expl(self, action_id, parameters, qu_mol_graph):
+        # Converting action id to coordinates in the action space
+        i = action_id // len(self.fragments)
+        j = action_id % len(self.fragments)
+
+        # Computing fragment type that will be added on current action
+        new_at_type = self.fragments[j]
+
+        # Old atom type initialization
+        old_at_type = ""
+
+        # Computing atom type of the atom on which the new fragment will be bonded (if it is defined)
+        if i >= 1:
+            old_at_id = i - 1
+            old_at_type = qu_mol_graph.get_atom_type(old_at_id)
+
+        return old_at_type + ":" + new_at_type
+
+    def get_valid_actions_mask(self, parameters, qu_mol_graph):
+        # Action space validity initialization
+        action_space = np.full((parameters.max_heavy_atoms + 1, len(self.fragments)), False)
+
+        # Possibility of adding an unconnected fragment if the molecular graph is empty
+        action_space[0] = np.full((len(self.fragments),), qu_mol_graph.get_n_atoms() == 0)
+
+        # Computing the possibility of adding a fragment with a connection
+        if qu_mol_graph.get_n_atoms() < parameters.max_heavy_atoms:
+
+            # Extracting the free electrons vector of the molecular graph
+            free_electons_vect = qu_mol_graph.get_free_electrons_vector()
+
+            # Extracting the formal charges vector
+            formal_charges_vect = qu_mol_graph.get_formal_charge_vector()
+
+            # Iterating over the list of defined atoms in the molecular graph
+            for i in range(0, qu_mol_graph.get_n_atoms()):
+                # The new fragment can be bonded to the current atom if the current atom has free electrons left and if
+                # it has no formal charge
+                action_space[i + 1] = np.full((len(self.fragments),),
+                                              free_electons_vect[i] >= 1 and formal_charges_vect[i] == 0)
+
+        return action_space.reshape(-1, )
+
+    def get_action_space_size(self, parameters, qu_mol_graph):
+        # The size of the action space is equal to the cardinality of the set of insertable fragment types times the
+        # max size of the molecule for fragment addition with bond
+        return len(self.fragments) * (parameters.max_heavy_atoms + 1)
+
+    def execute_action(self, action_id, parameters, qu_mol_graph):
+        super(AddFragmentActionSpace, self).execute_action(action_id, parameters, qu_mol_graph)
+
+        # Simple addition of the fragment
+        if action_id < len(self.fragments):
+            qu_mol_graph.add_fragment(self.fragments[action_id])
+
+        # Adding the new fragment with a bond to an existing one
+        else:
+            size_before = qu_mol_graph.get_n_atoms()
+            fragment = self.fragments[action_id % len(self.fragments)]
+            to_atom_id = action_id // len(self.fragments) - 1
+
+            # Adding the fragment
+            qu_mol_graph.add_fragment(fragment)
+
+            #Creating a bond from the selected atom to a random one of the fragment
+            free_electons_vect = fragment.get_free_electrons_vector()
+            formal_charges_vect = fragment.get_formal_charge_vector()
+            frag_atom_idx = np.random.choice([i for i in range(len(free_electons_vect)) if free_electons_vect[i]>0 and formal_charges_vect[i]==0])
+            qu_mol_graph.add_bond(to_atom_id, int(frag_atom_idx+size_before))
+
+        try:
+            # Updating the molecular graph after addition
+            qu_mol_graph.end_atom_addition_procedure()
+
+        except Exception as e:
+            print("Add fragment caused error")
+            raise e
+
+        # Non terminal action
+        return True
+
+    def action_to_str(self, action_id, parameters, qu_mol_graph):
+
+        dscr = "Add fragment of type " + str(self.fragments[action_id % len(self.fragments)])
+        if self.allow_bonding and action_id >= len(self.fragments):
+            dscr += " to atom of id " + str(action_id // len(self.fragments) - 1) + " (" + \
+                    str(qu_mol_graph.get_atom_type(action_id // len(self.fragments) - 1)) + ")"
+        return dscr

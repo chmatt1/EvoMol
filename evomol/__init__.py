@@ -277,6 +277,7 @@ def _parse_action_space(parameters_dict):
         "substitution": input_param_action_space[
             "substitution"] if "substitution" in input_param_action_space else True,
         "append_atom": input_param_action_space["append_atom"] if "append_atom" in input_param_action_space else True,
+        "append_fragment": input_param_action_space["append_fragment"] if "append_fragment" in input_param_action_space else False,
         "remove_atom": input_param_action_space["remove_atom"] if "remove_atom" in input_param_action_space else True,
         "change_bond": input_param_action_space["change_bond"] if "change_bond" in input_param_action_space else True,
         "change_bond_prevent_breaking_creating_bonds": input_param_action_space[
@@ -304,6 +305,7 @@ def _parse_action_space(parameters_dict):
         generic_action_space(atom_symbols_list=symbols_list,
                              max_heavy_atoms=explicit_action_space_parameters["max_heavy_atoms"],
                              append_atom=explicit_action_space_parameters["append_atom"],
+                             append_fragment=explicit_action_space_parameters["append_fragment"],
                              remove_atom=explicit_action_space_parameters["remove_atom"],
                              change_bond=explicit_action_space_parameters["change_bond"],
                              change_bond_prevent_breaking_creating_bonds=explicit_action_space_parameters[
@@ -313,7 +315,8 @@ def _parse_action_space(parameters_dict):
                              move_group=explicit_action_space_parameters["move_group"],
                              remove_group=explicit_action_space_parameters["remove_group"],
                              remove_group_only_remove_smallest_group=explicit_action_space_parameters[
-                                 "remove_group_only_remove_smallest_group"])
+                                 "remove_group_only_remove_smallest_group"],
+                             sulfur_valence=explicit_action_space_parameters["sulfur_valence"])
 
     for parameter in input_param_action_space:
         if parameter not in explicit_action_space_parameters:

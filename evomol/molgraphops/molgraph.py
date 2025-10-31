@@ -134,6 +134,12 @@ class MolGraph:
         # Updating internal representation
         self.update_mol_representation()
 
+    def add_fragment(self, fragment):
+        """
+        Adding a MolGraph fragment
+        """
+        self.mol_graph.InsertMol(fragment.mol_graph)
+
     def rm_atom(self, id, update_repr=True):
         """
         Removing the atom of given id from the molecule

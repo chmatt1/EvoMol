@@ -120,6 +120,7 @@ The ```"action_space_parameters"``` attribute can be set with a dictionary conta
 * ```"max_heavy_atoms"```: maximum molecular size in terms of number of heavy atoms (**38**).
 * ```"append_atom"```: whether to use *append atom* action (**True**).
 * ```"remove_atom"```: whether to use *remove atom* action (**True**).
+* ```"append_fragment"```: whether to use *append fragment* action, set this value to the path of the fragments.smi file (see e.g. examples/example_fragments.smi) if *append fragment* action should be used (**False**).
 * ```"change_bond"```: whether to use *change bond* action (**True**).
 * ```"change_bond_prevent_breaking_creating_bonds"```: whether to prevent the removal or creation of bonds by *change_bond* action (**False**) 
 * ```"substitution"```: whether to use *substitute atom type* action (**True**).
