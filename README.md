@@ -161,6 +161,7 @@ to their objective function value ("random_weighted") .
 perturbation is first drawn randomly, then the actual perturbation of previously selected type is drawn randomly among 
 the valid ones (**evomol.molgraphops.exploration.RandomActionTypeSelectionStrategy()**).
 * ```"mutation_find_improver_tries"``` : maximum number of mutations to find an improver (**50**).
+* ```"mutation_pass_filter_tries"``` : maximum number of mutations to try and pass all filters. The filters are checked before objective function calculation (**50**).
 * ```"guacamol_init_top_100"``` : whether to initialize the population with the 100 best scoring individuals of the 
 GuacaMol <a href="https://academic.oup.com/nar/article/45/D1/D945/2605707">ChEMBL</a> subset in case of taking the 
 GuacaMol benchmarks (**False**). The list of SMILES must be given as initial population.

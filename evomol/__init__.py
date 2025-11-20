@@ -336,6 +336,8 @@ def _parse_mutation_parameters(explicit_search_parameters, evaluation_strategy, 
     mutation_strategy = KRandomGraphOpsImprovingMutationStrategy(k=explicit_search_parameters["mutation_max_depth"],
                                                                  max_n_try=explicit_search_parameters[
                                                                      "mutation_find_improver_tries"],
+                                                                 max_filter_try=explicit_search_parameters[
+                                                                     "mutation_pass_filter_tries"],
                                                                  evaluation_strategy=evaluation_strategy,
                                                                  action_spaces=action_spaces,
                                                                  action_spaces_parameters=action_spaces_parameters,
@@ -387,6 +389,8 @@ def _extract_explicit_search_parameters(parameters_dict):
             "mutation_max_depth"] if "mutation_max_depth" in input_search_parameters else 2,
         "mutation_find_improver_tries": input_search_parameters[
             "mutation_find_improver_tries"] if "mutation_find_improver_tries" in input_search_parameters else 50,
+        "mutation_pass_filter_tries": input_search_parameters[
+            "mutation_pass_filter_tries"] if "mutation_pass_filter_tries" in input_search_parameters else 50,
         "n_max_desc": input_search_parameters["n_max_desc"] if "n_max_desc" in input_search_parameters else 3000000,
         "shuffle_init_pop": input_search_parameters[
             "shuffle_init_pop"] if "shuffle_init_pop" in input_search_parameters else False,

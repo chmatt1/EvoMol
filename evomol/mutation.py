@@ -52,13 +52,14 @@ class KRandomGraphOpsImprovingMutationStrategy(MutationStrategy):
     to find an improver. If no improver is found, raising a MutationError.
     """
 
-    def __init__(self, k, max_n_try, evaluation_strategy, action_spaces, action_spaces_parameters,
+    def __init__(self, k, max_n_try, max_filter_try, evaluation_strategy, action_spaces, action_spaces_parameters,
                  neighbour_gen_strategy=None, problem_type="max", quality_filter=False, silly_molecules_fp_threshold=1,
                  silly_molecules_db=None, sascore_threshold=float("inf"), custom_filter_function=None):
         """
 
         :param k: max number of successive graph operations
         :param max_n_try: max number of tries to find an improver
+        :param max_filter_try: max number of filter failures before skipping
         :param evaluation_strategy: EvaluationStrategy instance with an evaluate_individual method
         :param action_spaces: list of ActionSpace instances
         :param action_spaces_parameters: instance of ActionSpace.ActionSpaceParameters
@@ -76,6 +77,7 @@ class KRandomGraphOpsImprovingMutationStrategy(MutationStrategy):
         """
         self.k = k
         self.max_n_try = max_n_try
+        self.max_filter_try= max_filter_try
         self.evaluation_strategy = evaluation_strategy
         self.action_spaces = action_spaces
         self.actionspace_parameters = action_spaces_parameters
@@ -111,7 +113,9 @@ class KRandomGraphOpsImprovingMutationStrategy(MutationStrategy):
         n_actions = int(np.random.choice(np.arange(1, self.k + 1)))
 
         # Trying max_n_try times to find an improver
-        for i in range(self.max_n_try):
+        n_try = 0
+        filter_tries = 0
+        while n_try <= self.max_n_try and filter_tries <= self.max_filter_try:
 
             try:
 
@@ -129,6 +133,7 @@ class KRandomGraphOpsImprovingMutationStrategy(MutationStrategy):
                 raise MutationError(individual.to_aromatic_smiles()) from e
 
             # Computing boolean filter values
+            filter_tries += 1
             failed_tabu_pop = mutated_ind.to_aromatic_smiles() in pop_tabu_list
             failed_tabu_external = external_tabu_list is not None and \
                                    mutated_ind.to_aromatic_smiles() in external_tabu_list
@@ -152,6 +157,7 @@ class KRandomGraphOpsImprovingMutationStrategy(MutationStrategy):
             if not failed_tabu_pop and not failed_tabu_external and not failed_quality_filter and \
                     not failed_sillywalks_filter and not failed_sascore_filter and not failed_custom_filter:
 
+                n_try += 1
                 try:
                     tstart = time.time()
 
